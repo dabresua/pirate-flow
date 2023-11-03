@@ -1,0 +1,49 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Default values definition
+INFRA_VM_TYPE = "geerlingguy/ubuntu2004"
+INFRA_MEMORY_MB = 1024
+INFRA_VM_IP = "192.168.56.99"
+INFRA_SHARED_FOLDER = "../Downloads"
+
+# Environment variables processing
+if ENV.key?("INFRA_VM_TYPE") then
+    INFRA_VM_TYPE = ENV["INFRA_VM_TYPE"]
+end
+if ENV.key?("INFRA_MEMORY_MB") then
+    INFRA_MEMORY_MB = ENV["INFRA_MEMORY_MB"].to_i
+end
+if ENV.key?("INFRA_VM_IP") then
+    INFRA_VM_IP = ENV["INFRA_VM_IP"].to_i
+end
+if ENV.key?("INFRA_SHARED_FOLDER") then
+    INFRA_SHARED_FOLDER = ENV["INFRA_SHARED_FOLDER"]
+end
+
+# Provision scripts
+$provision_script = <<SCRIPT
+set -e
+echo "Provisioning the test environment"
+export DEBIAN_FRONTEND=noninteractive
+apt-get install python3.8-venv python3-pip -y
+pip3 install pirate-get
+python3 -m venv /home/vagrant/pirate
+source /home/vagrant/pirate/bin/activate
+if [ $(grep "source /home/vagrant/pirate/bin/activate" /home/vagrant/.bashrc -c) -eq 0 ]
+then
+    echo "source /home/vagrant/pirate/bin/activate" >> /home/vagrant/.bashrc
+fi
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  config.vm.box = INFRA_VM_TYPE
+  config.vm.network "private_network", ip: INFRA_VM_IP
+  config.vm.synced_folder INFRA_SHARED_FOLDER, "/home/vagrant/Downloads"
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = INFRA_MEMORY_MB
+    vb.cpus = 2
+    vb.customize ["modifyvm", :id, "--cpuexecutioncap", "80", "--audio", "none"]
+  end
+  config.vm.provision "shell", inline: $provision_script
+end
