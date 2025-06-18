@@ -27,13 +27,18 @@ set -e
 echo "Provisioning the test environment"
 export DEBIAN_FRONTEND=noninteractive
 apt-get install python3.8-venv python3-pip -y
-pip3 install pirate-get
 python3 -m venv /home/vagrant/pirate
 source /home/vagrant/pirate/bin/activate
+pip3 install -r requirements.txt
 if [ $(grep "source /home/vagrant/pirate/bin/activate" /home/vagrant/.bashrc -c) -eq 0 ]
 then
     echo "source /home/vagrant/pirate/bin/activate" >> /home/vagrant/.bashrc
 fi
+SCRIPT
+
+$launch_flask = <<SCRIPT
+source /home/vagrant/pirate/bin/activate
+flask --app pirate-flow run --host=0.0.0.0
 SCRIPT
 
 Vagrant.configure("2") do |config|
@@ -45,5 +50,8 @@ Vagrant.configure("2") do |config|
     vb.cpus = 2
     vb.customize ["modifyvm", :id, "--cpuexecutioncap", "80", "--audio", "none"]
   end
+  config.vm.provision "file", source: "../web/requirements.txt", destination: "requirements.txt"
   config.vm.provision "shell", inline: $provision_script
+  config.vm.provision "file", run: "always", source: "../web", destination: "$HOME"
+  #config.vm.provision "shell", inline: $launch_flask, run: "always"
 end

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} Files {% endblock %}</h1>
+    <div style="width: 100%; margin: auto">
+        <table id="downloads-table" class="table table-hover">
+            <thead>
+                <TR>
+                    <th scope="col"> # </th>
+                    <th scope="col"> Name</th>
+                    <th scope="col"> Size </th>
+                    <th scope="col"> Date </th>
+                    <th scope="col">Delete</th>
+                </TR>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                <TR>
+                    <th scope="row">{{ file.id }}</th>
+                    <td>{{ file.name | safe }}</td>
+                    <td>{{ file.size }}</td>
+                    <td>{{ file.date }}</td>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="check{{ file.id }}" name="option1" value="something">
+                        </div>
+                    </td>
+                </TR>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <button type="submit" class="btn btn-danger">Delete selected files</button>
+{% endblock %}
